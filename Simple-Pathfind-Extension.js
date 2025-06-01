@@ -109,26 +109,31 @@
     }
 
     generateCollisionGrid() {
-      const canvas = document.createElement("canvas");
-      canvas.width = this.width;
-      canvas.height = this.height;
-      const ctx = canvas.getContext("2d");
-      const sprite = Scratch.vm.runtime.getSpriteTargetByName(this.collisionSprite);
-      if (!sprite) return;
-      const costume = sprite.getCostume();
-      const skin = sprite.drawable.skin;
-      const image = skin._canvas; // internal access
-      ctx.drawImage(image, 0, 0);
-      const imageData = ctx.getImageData(0, 0, this.width, this.height);
-      this.grid = new Uint8Array(this.width * this.height);
-      for (let y = 0; y < this.height; y++) {
-        for (let x = 0; x < this.width; x++) {
-          const i = (y * this.width + x) * 4;
-          const alpha = imageData.data[i + 3];
-          this.grid[y * this.width + x] = alpha > 128 ? 1 : 0;
-        }
-      }
+  const canvas = document.createElement("canvas");
+  canvas.width = this.width;
+  canvas.height = this.height;
+  const ctx = canvas.getContext("2d");
+
+  const sprite = Scratch.vm.runtime.getSpriteTargetByName(this.collisionSprite);
+  if (!sprite) return;
+
+  const costumeIndex = sprite.currentCostume;
+  const costume = sprite.sprite.costumes[costumeIndex];
+  const skin = sprite.runtime.renderer._skins[costume.skinId];
+  const image = skin._canvas || skin._texture._canvas;
+  if (!image) return;
+
+  ctx.drawImage(image, 0, 0);
+  const imageData = ctx.getImageData(0, 0, this.width, this.height);
+  this.grid = new Uint8Array(this.width * this.height);
+  for (let y = 0; y < this.height; y++) {
+    for (let x = 0; x < this.width; x++) {
+      const i = (y * this.width + x) * 4;
+      const alpha = imageData.data[i + 3];
+      this.grid[y * this.width + x] = alpha > 128 ? 1 : 0;
     }
+  }
+}
 
     computePath(args) {
       const start = { x: Math.floor(args.X1), y: Math.floor(args.Y1) };
